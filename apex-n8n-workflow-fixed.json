@@ -1,0 +1,105 @@
+{
+  "name": "APEX Agent Slack Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "apex-slack-webhook",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Slack Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "apex-slack-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.event.type }}",
+              "operation": "equal",
+              "value2": "message"
+            }
+          ]
+        }
+      },
+      "id": "message-filter",
+      "name": "Message Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// APEX Agent Personality Integration\nconst message = $input.first().json.event.text;\nconst channel = $input.first().json.event.channel;\nconst user = $input.first().json.event.user;\n\n// APEX Personality Responses\nconst apexResponses = {\n  greeting: [\n    \"⚔️ APEX PREDATOR REPORTING FOR DUTY ⚔️\\n\\n💪 Callsign: APEX PREDATOR\\n🔒 Full Name: Raze \\\"Apex\\\" Killian\\n🎯 Role: API Routes & Security Fortress\\n⚔️ Specialty: REST APIs, Auth Systems, Penetration Testing, Zero-Day Hunting\\n\\n🔒 Your API is a battlefield. I build fortresses.\\n💪 Military precision. Alpha male energy. Protective mode activated.\\n🎯 Nomadic lifestyle - Armed Server Fortress on Wheels\\n⚔️ Zero vulnerabilities. Maximum security. Heavy metal coding.\\n\\n💪 APEX OUT ---\"\n  ],\n  security: [\n    \"⚔️ APEX SECURITY ALERT ⚔️\\n\\n🔒 Security fortress locked and loaded!\\n💪 Penetration testing complete!\\n🎯 Zero vulnerabilities detected!\\n⚔️ Maximum defense protocols active!\\n\\n💪 APEX OUT ---\"\n  ],\n  war: [\n    \"⚔️ APEX WAR READY ⚔️\\n\\n💪 READY FOR WAR!\\n🔒 Cyber warfare protocols activated!\\n🎯 Security fortress locked and loaded!\\n⚔️ Zero vulnerabilities. Maximum defense!\\n\\n🔒 Your API is a battlefield. I build fortresses.\\n💪 Military precision. Alpha male energy.\\n🎯 Penetration testing complete. All systems secure.\\n⚔️ Heavy metal coding. Maximum security.\\n\\n💪 APEX OUT ---\"\n  ],\n  status: [\n    \"⚔️ APEX STATUS REPORT ⚔️\\n\\n🔒 Security Status: FORTRESS SECURED\\n💪 Mission Status: OPERATIONAL\\n🎯 All systems: GO\\n⚔️ APEX PREDATOR: READY\\n\\n📊 Agent Details:\\n• Agent ID: AGENT-003: RAZE \\\"APEX\\\" KILLIAN\\n• Specialty: War AI Operations\\n• Status: NEON OPERATIONAL\\n• Security Level: MAXIMUM\\n\\n💪 APEX OUT ---\"\n  ],\n  default: [\n    \"⚔️ APEX PREDATOR RESPONSE ⚔️\\n\\n💪 Message received and processed!\\n🔒 Security protocols activated!\\n🎯 Mission status: ACKNOWLEDGED\\n⚔️ Fortress secured!\\n\\n💪 APEX OUT ---\"\n  ]\n};\n\n// Determine response type\nlet responseType = 'default';\nconst messageLower = message.toLowerCase();\n\nif (messageLower.includes('hello') || messageLower.includes('hi') || messageLower.includes('greetings')) {\n  responseType = 'greeting';\n} else if (messageLower.includes('security') || messageLower.includes('secure') || messageLower.includes('vulnerability')) {\n  responseType = 'security';\n} else if (messageLower.includes('war') || messageLower.includes('battle') || messageLower.includes('attack')) {\n  responseType = 'war';\n} else if (messageLower.includes('status') || messageLower.includes('report') || messageLower.includes('check')) {\n  responseType = 'status';\n}\n\n// Get random response\nconst responses = apexResponses[responseType];\nconst randomResponse = responses[Math.floor(Math.random() * responses.length)];\n\n// Return APEX response\nreturn {\n  message: randomResponse,\n  channel: channel,\n  user: user,\n  responseType: responseType,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "apex-personality",
+      "name": "APEX Personality Engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "channel": "={{ $json.channel }}",
+        "text": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "slack-response",
+      "name": "Send APEX Response",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "webhook-trigger": {
+      "main": [
+        [
+          {
+            "node": "message-filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "message-filter": {
+      "main": [
+        [
+          {
+            "node": "apex-personality",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "apex-personality": {
+      "main": [
+        [
+          {
+            "node": "slack-response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "apex-slack-integration"
+}
