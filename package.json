@@ -1,0 +1,50 @@
+{
+  "name": "shadow-slack-mcp",
+  "version": "1.0.0",
+  "description": "Slack MCP Server for Shadow (VOID) - Testing and Security Expert",
+  "main": "slack-mcp-server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node slack-mcp-server.js",
+    "dev": "node --inspect slack-mcp-server.js",
+    "test": "node test-slack-mcp.js",
+    "test-manual": "echo '⚫ Shadow Agent005: Tests are for the weak. I break things manually.'",
+    "test-n8n": "node test-n8n-integration.js",
+    "test-workflow": "node test-workflow.js",
+    "create-workflow": "node create-workflow-api.js",
+    "web": "node shadow-web-app.js",
+    "web-dev": "node --inspect shadow-web-app.js",
+    "n8n": "node start-n8n.js",
+    "n8n-start": "n8n start",
+    "n8n-dev": "n8n start --tunnel"
+  },
+  "keywords": [
+    "mcp",
+    "slack",
+    "ai-agent",
+    "shadow-agent005",
+    "void",
+    "testing",
+    "security"
+  ],
+  "author": "Shadow (VOID)",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@slack/web-api": "^7.0.0",
+    "axios": "^1.12.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shoreagents-ai/remote-agents-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shoreagents-ai/remote-agents-ai/issues"
+  },
+  "homepage": "https://github.com/shoreagents-ai/remote-agents-ai#readme"
+}

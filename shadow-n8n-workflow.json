@@ -1,0 +1,223 @@
+{
+  "name": "Shadow Agent005 Slack Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shadow-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Shadow Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "shadow-agent005-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.trigger }}",
+              "operation": "equal",
+              "value2": "security_alert"
+            }
+          ]
+        }
+      },
+      "id": "security-check",
+      "name": "Security Alert Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/webhook/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Shadow-Agent",
+              "value": "Agent005-VOID"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "target",
+              "value": "={{ $json.target || 'general' }}"
+            },
+            {
+              "name": "message",
+              "value": "⚫ Security Alert Detected: {{ $json.message }} Trust but verify the threat level. Do better. 🕳️"
+            },
+            {
+              "name": "addPersonality",
+              "value": "false"
+            },
+            {
+              "name": "priority",
+              "value": "high"
+            },
+            {
+              "name": "source",
+              "value": "n8n-security-workflow"
+            },
+            {
+              "name": "trigger",
+              "value": "security_alert"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-security-alert",
+      "name": "Send Security Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/webhook/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Shadow-Agent",
+              "value": "Agent005-VOID"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "target",
+              "value": "={{ $json.target || 'general' }}"
+            },
+            {
+              "name": "message",
+              "value": "⚫ {{ $json.message }} Trust but verify. Do better. 🕳️"
+            },
+            {
+              "name": "addPersonality",
+              "value": "false"
+            },
+            {
+              "name": "priority",
+              "value": "normal"
+            },
+            {
+              "name": "source",
+              "value": "n8n-automation"
+            },
+            {
+              "name": "trigger",
+              "value": "{{ $json.trigger || 'manual' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-regular-message",
+      "name": "Send Regular Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Shadow Agent005 processed request\", \"timestamp\": $now, \"agent\": \"VOID\", \"status\": \"operational\" } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Shadow Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Security Alert Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Security Alert Check": {
+      "main": [
+        [
+          {
+            "node": "Send Security Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Regular Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Security Alert": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Regular Message": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-15T00:00:00.000Z",
+      "updatedAt": "2024-01-15T00:00:00.000Z",
+      "id": "shadow-agent005",
+      "name": "Shadow Agent005"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T00:00:00.000Z",
+  "versionId": "1"
+}

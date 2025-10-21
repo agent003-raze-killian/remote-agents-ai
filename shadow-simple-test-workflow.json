@@ -1,0 +1,123 @@
+{
+  "name": "Shadow Simple Test Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shadow-test",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "shadow-test-webhook"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/webhook/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Shadow-Agent",
+              "value": "Agent005-VOID"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "target",
+              "value": "={{ $json.target || 'general' }}"
+            },
+            {
+              "name": "message",
+              "value": "⚫ Workflow triggered: {{ $json.message || 'Test message from n8n' }} Trust but verify. Do better. 🕳️"
+            },
+            {
+              "name": "addPersonality",
+              "value": "false"
+            },
+            {
+              "name": "priority",
+              "value": "normal"
+            },
+            {
+              "name": "source",
+              "value": "n8n-workflow"
+            },
+            {
+              "name": "trigger",
+              "value": "webhook-test"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-to-shadow",
+      "name": "Send to Shadow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Shadow Agent005 processed your request\", \"timestamp\": $now, \"agent\": \"VOID\", \"status\": \"operational\", \"workflow\": \"shadow-test\" } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send to Shadow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Shadow": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-15T00:00:00.000Z",
+      "updatedAt": "2024-01-15T00:00:00.000Z",
+      "id": "shadow-test",
+      "name": "Shadow Test"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-15T00:00:00.000Z",
+  "versionId": "1"
+}
