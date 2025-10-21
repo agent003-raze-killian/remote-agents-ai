@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cipher-slack": {
+      "command": "node",
+      "args": ["cipher_slack_mcp.js"]
+    }
+  }
+}
