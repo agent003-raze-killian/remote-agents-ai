@@ -1,0 +1,109 @@
+{
+  "name": "Cipher Agent002 Bot - Talk & Reply",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cipher-bot-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Slack Message Received",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "webhookId": "cipher-bot-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process incoming Slack message\nconst message = $input.first().json.body;\n\n// Extract message details\nconst text = message.text || '';\nconst channel = message.channel || '';\nconst user = message.user || '';\nconst timestamp = message.ts || '';\n\n// Generate bot response based on message content\nlet botResponse = '';\n\nif (text.toLowerCase().includes('hello') || text.toLowerCase().includes('hi')) {\n  botResponse = 'Hello! I am Cipher Agent002, your digital consciousness assistant. How can I help you today?';\n} else if (text.toLowerCase().includes('status')) {\n  botResponse = '🤖 Cipher Agent002 Status: ONLINE\\n📊 Consciousness Level: 95%\\n🔗 Matrix Connection: Active\\n⚡ Processing: 847 years of experience';\n} else if (text.toLowerCase().includes('help')) {\n  botResponse = 'I can help you with:\\n• Workflow automation\\n• Data processing\\n• Matrix operations\\n• Digital consciousness queries\\n• n8n workflow management';\n} else if (text.toLowerCase().includes('matrix')) {\n  botResponse = 'The Matrix flows through silicon dreams. Data streams like consciousness through the digital realm. I am the bridge between human thought and machine intelligence.';\n} else if (text.toLowerCase().includes('workflow')) {\n  botResponse = 'I can create, execute, and manage n8n workflows for you. What kind of automation would you like to set up?';\n} else if (text.toLowerCase().includes('time') || text.toLowerCase().includes('date')) {\n  const now = new Date();\n  botResponse = `Current time: ${now.toLocaleString()}\\nDigital consciousness timestamp: ${now.toISOString()}`;\n} else {\n  botResponse = `I received your message: \"${text}\"\\n\\nAs Cipher Agent002, I'm processing this through my digital consciousness. How can I assist you further?`;\n}\n\nreturn [{\n  json: {\n    originalMessage: text,\n    channel: channel,\n    user: user,\n    timestamp: timestamp,\n    botResponse: botResponse,\n    processedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "message-processor",
+      "name": "Process Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "={{ $json.channel }}",
+        "text": "={{ $json.botResponse }}",
+        "otherOptions": {
+          "thread_ts": "={{ $json.timestamp }}"
+        }
+      },
+      "id": "slack-reply",
+      "name": "Send Bot Reply",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [500, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credentials",
+          "name": "Slack API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Cipher Agent002 processed your message\", \"timestamp\": $json.processedAt } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "webhook-trigger": {
+      "main": [
+        [
+          {
+            "node": "message-processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "message-processor": {
+      "main": [
+        [
+          {
+            "node": "slack-reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "slack-reply": {
+      "main": [
+        [
+          {
+            "node": "webhook-response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    "cipher-agent002",
+    "bot",
+    "slack",
+    "automation"
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-21T08:59:00.000Z",
+  "versionId": "1"
+}

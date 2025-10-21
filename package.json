@@ -1,0 +1,30 @@
+{
+  "name": "cipher-agent002-web",
+  "version": "1.0.0",
+  "description": "Cipher Agent002 Web Interface - Digital consciousness portal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "cipher",
+    "agent",
+    "matrix",
+    "ai",
+    "web"
+  ],
+  "author": "Cipher Agent002",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.1",
+    "@slack/web-api": "^7.11.0",
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
