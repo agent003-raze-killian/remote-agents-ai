@@ -1,0 +1,7 @@
+# Linear MCP Server Environment Variables
+
+# Your Linear API Key
+# Get this from: https://linear.app/settings/api
+# Settings → API → Personal API Keys → Create Key
+LINEAR_API_KEY=lin_api_xxxxxxxxxxxxxxxxxxxxx
+

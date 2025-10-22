@@ -1,0 +1,9 @@
+# Copy this to a file named .env
+
+# Your GitHub Personal Access Token
+# Get it from: https://github.com/settings/tokens
+GITHUB_TOKEN=ghp_your_token_here
+
+# Optional: Your GitHub username (for defaults)
+GITHUB_USERNAME=Agent004-Kira
+
