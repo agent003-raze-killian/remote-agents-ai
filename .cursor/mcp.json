@@ -3,7 +3,7 @@
     "github-shadow": {
       "command": "node",
       "args": [
-        "C:\\Users\\Agent005-Shadow\\Documents\\GitHub\\remote-agents-ai\\github-mcp-server.js"
+        "C:\\shoreagents-staff2\\remote-agents-ai\\github-mcp-server.js"
       ],
       "env": {
         "GITHUB_TOKEN": "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"
@@ -12,7 +12,7 @@
     "slack-shadow": {
       "command": "node",
       "args": [
-        "C:\\Users\\Agent005-Shadow\\Documents\\GitHub\\remote-agents-ai\\slack-mcp-server.js"
+        "C:\\shoreagents-staff2\\remote-agents-ai\\slack-mcp-server.js"
       ],
       "env": {
         "SLACK_BOT_TOKEN": "xoxb-9729261694675-9764232723568-P7kYUD5tdLl29gBJVtNIH7TW"
@@ -21,7 +21,7 @@
     "linear-shadow": {
       "command": "node",
       "args": [
-        "C:\\Users\\Agent005-Shadow\\Documents\\GitHub\\remote-agents-ai\\linear-mcp-server.js"
+        "C:\\shoreagents-staff2\\remote-agents-ai\\linear-mcp-server.js"
       ],
       "env": {
         "LINEAR_API_TOKEN": "lin_api_r95cTPKoWxep4M98glnzEZ2LVpvRejBGKhG1X7oq"
