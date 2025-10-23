@@ -1,0 +1,56 @@
+=====================================
+ECHO AGENT - FILES TO COPY
+=====================================
+
+Copy these files to the new computer:
+
+ESSENTIAL FILES (Required):
+---------------------------
+✅ echo-claude-bot.js
+✅ lib/echo-intelligence.js
+✅ package.json
+✅ package-lock.json
+
+SETUP FILES (Recommended):
+--------------------------
+✅ setup-echo.js
+✅ env.template
+✅ QUICK_SETUP.md
+✅ ECHO_SETUP_GUIDE.md
+✅ INSTALL.md
+✅ FILES_TO_COPY.txt (this file)
+
+PROJECT FILES (Optional):
+------------------------
+□ README.md
+□ .gitignore
+
+OTHER BOT VARIANTS (Optional):
+------------------------------
+□ echo-webhook-server.js
+□ echo-simple-auto-reply.js
+□ echo-final-working.js
+□ lib/nova-intelligence.js
+□ lib/agent-manager.js
+□ lib/slack-handler.js
+
+DO NOT COPY:
+-----------
+❌ .env (contains secrets - recreate on new computer)
+❌ node_modules/ (reinstall with npm install)
+❌ .git/ (optional - clone from repo instead)
+
+TOTAL SIZE:
+-----------
+~50 KB (without node_modules)
+
+INSTALLATION STEPS:
+-------------------
+1. Copy files above to new computer
+2. Open terminal in the folder
+3. Run: npm install
+4. Run: npm run setup
+5. Run: npm run echo-claude
+
+DONE! 🚀
+
