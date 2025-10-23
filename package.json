@@ -6,6 +6,9 @@
   "type": "module",
   "scripts": {
     "setup": "node setup-echo.js",
+    "announce-task": "node announce-task-complete.js",
+    "git-push": "node git-push-announce.js",
+    "git-pull": "node git-pull-announce.js",
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "run": "node src/index.js",
