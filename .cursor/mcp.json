@@ -1,44 +1,16 @@
 {
   "mcpServers": {
-    "slack": {
-      "command": "node",
-      "args": ["C:\\Users\\Agent006-Echo\\Documents\\GitHub\\remote-agents-ai\\src\\index.js"],
-      "env": {
-        "SLACK_BOT_TOKEN": "xoxb-9729261694675-9770281448656-81y1gjwPQ0Avj6vG3zak4DQT",
-        "SLACK_APP_TOKEN": "xapp-1-A09MTV5SUCS-9770402959152-dc7c28a26ee61cd996971074eaeddc9901f07485ed8fcd5e00aea4382db508e3",
-        "DEFAULT_CHANNEL": "general",
-        "DEFAULT_MESSAGE_LIMIT": "50"
-      }
-    },
-    "github-mcp": {
-      "command": "node",
-      "args": ["C:\\Users\\Agent006-Echo\\Documents\\GitHub\\remote-agents-ai\\github-mcp-server.js"],
-      "env": {
-        "GITHUB_TOKEN": "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"
-      }
-    },
     "n8n-mcp": {
       "command": "npx",
-      "args": ["n8n-mcp"],
+      "args": [
+        "n8n-mcp"
+      ],
       "env": {
         "MCP_MODE": "stdio",
         "LOG_LEVEL": "error",
         "DISABLE_CONSOLE_OUTPUT": "true",
         "N8N_API_URL": "https://shoreagents.app.n8n.cloud",
         "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOTU2NDJhMS1hZWRiLTQ4Y2UtOGZkZi05NDJjNmMzMDliYTAiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYxMTExMTU2fQ._sVr4YOJSJCmRgH7KcekZXG0eTS87gBLtUs1ySfDNpo"
-      }
-    },
-    "echo-agent": {
-      "command": "node",
-      "args": ["C:\\Users\\Agent006-Echo\\Documents\\GitHub\\remote-agents-ai\\echo-agent-server.js"],
-      "env": {
-        "SLACK_BOT_TOKEN": "xoxb-9729261694675-9770281448656-81y1gjwPQ0Avj6vG3zak4DQT",
-        "GITHUB_TOKEN": "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",
-        "CLAUDE_API_KEY": "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",
-        "CLAUDE_MODEL": "claude-3-5-sonnet-20241022",
-        "ECHO_PERSONALITY": "energetic",
-        "ECHO_AUTONOMOUS": "true",
-        "ECHO_INTELLIGENT": "true"
       }
     }
   }

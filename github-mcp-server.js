@@ -3,8 +3,8 @@
 /**
  * 🚀 GitHub MCP Server for Cursor
  * 
- * Complete GitHub integration with 25+ functions for repository management,
- * issues, pull requests, code management, and collaboration tools.
+ * Complete GitHub integration with 31+ functions for repository management,
+ * issues, pull requests, code management, collaboration tools, and Git operations.
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -423,6 +423,87 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['username'],
         },
       },
+
+      // Git Operations
+      {
+        name: 'github_clone_repository',
+        description: 'Clone a repository to local filesystem',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            owner: { type: 'string', description: 'Repository owner' },
+            repo: { type: 'string', description: 'Repository name' },
+            localPath: { type: 'string', description: 'Local directory path to clone into' },
+            branch: { type: 'string', description: 'Branch to clone (default: main/master)' },
+          },
+          required: ['owner', 'repo', 'localPath'],
+        },
+      },
+      {
+        name: 'github_push_changes',
+        description: 'Push local changes to remote repository',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            localPath: { type: 'string', description: 'Local repository path' },
+            branch: { type: 'string', description: 'Branch to push to' },
+            message: { type: 'string', description: 'Commit message' },
+            files: { type: 'array', items: { type: 'string' }, description: 'Files to commit (empty = all changes)' },
+          },
+          required: ['localPath', 'branch', 'message'],
+        },
+      },
+      {
+        name: 'github_pull_changes',
+        description: 'Pull latest changes from remote repository',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            localPath: { type: 'string', description: 'Local repository path' },
+            branch: { type: 'string', description: 'Branch to pull from' },
+            rebase: { type: 'boolean', description: 'Use rebase instead of merge', default: false },
+          },
+          required: ['localPath'],
+        },
+      },
+      {
+        name: 'github_merge_branches',
+        description: 'Merge one branch into another locally',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            localPath: { type: 'string', description: 'Local repository path' },
+            sourceBranch: { type: 'string', description: 'Source branch to merge from' },
+            targetBranch: { type: 'string', description: 'Target branch to merge into' },
+            message: { type: 'string', description: 'Merge commit message' },
+          },
+          required: ['localPath', 'sourceBranch', 'targetBranch'],
+        },
+      },
+      {
+        name: 'github_checkout_branch',
+        description: 'Checkout a branch locally',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            localPath: { type: 'string', description: 'Local repository path' },
+            branch: { type: 'string', description: 'Branch name to checkout' },
+            createNew: { type: 'boolean', description: 'Create new branch if it does not exist', default: false },
+          },
+          required: ['localPath', 'branch'],
+        },
+      },
+      {
+        name: 'github_get_git_status',
+        description: 'Get Git status of local repository',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            localPath: { type: 'string', description: 'Local repository path' },
+          },
+          required: ['localPath'],
+        },
+      },
     ],
   };
 });
@@ -498,6 +579,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await handleGetUserInfo(args);
       case 'github_list_user_repositories':
         return await handleListUserRepositories(args);
+
+      // Git Operations
+      case 'github_clone_repository':
+        return await handleCloneRepository(args);
+      case 'github_push_changes':
+        return await handlePushChanges(args);
+      case 'github_pull_changes':
+        return await handlePullChanges(args);
+      case 'github_merge_branches':
+        return await handleMergeBranches(args);
+      case 'github_checkout_branch':
+        return await handleCheckoutBranch(args);
+      case 'github_get_git_status':
+        return await handleGetGitStatus(args);
 
       default:
         throw new Error(`Unknown tool: ${name}`);
@@ -1158,6 +1253,179 @@ async function handleListUserRepositories(args) {
       },
     ],
   };
+}
+
+// Git Operations Handlers
+async function handleCloneRepository(args) {
+  const { owner, repo, localPath, branch } = args;
+  const { execSync } = await import('child_process');
+  
+  try {
+    // Get repository info to get clone URL
+    const repoInfo = await octokit.rest.repos.get({ owner, repo });
+    const cloneUrl = repoInfo.data.clone_url;
+    
+    // Clone the repository
+    const cloneCommand = branch ? 
+      `git clone -b ${branch} ${cloneUrl} "${localPath}"` : 
+      `git clone ${cloneUrl} "${localPath}"`;
+    
+    execSync(cloneCommand, { stdio: 'pipe' });
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `📥 **Repository Cloned Successfully!**\n\n**Repository:** ${owner}/${repo}\n**Local Path:** ${localPath}\n**Branch:** ${branch || 'default'}\n**Clone URL:** ${cloneUrl}\n\n✅ Repository is now available locally!`,
+        },
+      ],
+    };
+  } catch (error) {
+    throw new Error(`Failed to clone repository: ${error.message}`);
+  }
+}
+
+async function handlePushChanges(args) {
+  const { localPath, branch, message, files = [] } = args;
+  const { execSync } = await import('child_process');
+  
+  try {
+    // Add files to staging
+    if (files.length > 0) {
+      files.forEach(file => {
+        execSync(`git add "${file}"`, { cwd: localPath, stdio: 'pipe' });
+      });
+    } else {
+      execSync('git add .', { cwd: localPath, stdio: 'pipe' });
+    }
+    
+    // Commit changes
+    execSync(`git commit -m "${message}"`, { cwd: localPath, stdio: 'pipe' });
+    
+    // Push to remote
+    execSync(`git push origin ${branch}`, { cwd: localPath, stdio: 'pipe' });
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `🚀 **Changes Pushed Successfully!**\n\n**Repository:** ${localPath}\n**Branch:** ${branch}\n**Commit Message:** ${message}\n**Files:** ${files.length > 0 ? files.join(', ') : 'All changes'}\n\n✅ Changes are now on GitHub!`,
+        },
+      ],
+    };
+  } catch (error) {
+    throw new Error(`Failed to push changes: ${error.message}`);
+  }
+}
+
+async function handlePullChanges(args) {
+  const { localPath, branch = 'main', rebase = false } = args;
+  const { execSync } = await import('child_process');
+  
+  try {
+    const pullCommand = rebase ? 
+      `git pull --rebase origin ${branch}` : 
+      `git pull origin ${branch}`;
+    
+    const output = execSync(pullCommand, { cwd: localPath, encoding: 'utf8' });
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `📥 **Changes Pulled Successfully!**\n\n**Repository:** ${localPath}\n**Branch:** ${branch}\n**Method:** ${rebase ? 'Rebase' : 'Merge'}\n\n**Output:**\n${output}\n\n✅ Local repository is now up to date!`,
+        },
+      ],
+    };
+  } catch (error) {
+    throw new Error(`Failed to pull changes: ${error.message}`);
+  }
+}
+
+async function handleMergeBranches(args) {
+  const { localPath, sourceBranch, targetBranch, message } = args;
+  const { execSync } = await import('child_process');
+  
+  try {
+    // Checkout target branch
+    execSync(`git checkout ${targetBranch}`, { cwd: localPath, stdio: 'pipe' });
+    
+    // Merge source branch
+    const mergeMessage = message || `Merge branch '${sourceBranch}' into ${targetBranch}`;
+    execSync(`git merge ${sourceBranch} -m "${mergeMessage}"`, { cwd: localPath, stdio: 'pipe' });
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `🔀 **Branches Merged Successfully!**\n\n**Repository:** ${localPath}\n**Source Branch:** ${sourceBranch}\n**Target Branch:** ${targetBranch}\n**Message:** ${mergeMessage}\n\n✅ ${sourceBranch} has been merged into ${targetBranch}!`,
+        },
+      ],
+    };
+  } catch (error) {
+    throw new Error(`Failed to merge branches: ${error.message}`);
+  }
+}
+
+async function handleCheckoutBranch(args) {
+  const { localPath, branch, createNew = false } = args;
+  const { execSync } = await import('child_process');
+  
+  try {
+    const checkoutCommand = createNew ? 
+      `git checkout -b ${branch}` : 
+      `git checkout ${branch}`;
+    
+    execSync(checkoutCommand, { cwd: localPath, stdio: 'pipe' });
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `🌿 **Branch Checked Out Successfully!**\n\n**Repository:** ${localPath}\n**Branch:** ${branch}\n**Action:** ${createNew ? 'Created new branch' : 'Switched to existing branch'}\n\n✅ You are now on branch ${branch}!`,
+        },
+      ],
+    };
+  } catch (error) {
+    throw new Error(`Failed to checkout branch: ${error.message}`);
+  }
+}
+
+async function handleGetGitStatus(args) {
+  const { localPath } = args;
+  const { execSync } = await import('child_process');
+  
+  try {
+    // Get current branch
+    const currentBranch = execSync('git branch --show-current', { cwd: localPath, encoding: 'utf8' }).trim();
+    
+    // Get status
+    const status = execSync('git status --porcelain', { cwd: localPath, encoding: 'utf8' });
+    const statusLines = status.trim().split('\n').filter(line => line.length > 0);
+    
+    // Get commit info
+    const lastCommit = execSync('git log -1 --oneline', { cwd: localPath, encoding: 'utf8' }).trim();
+    
+    // Get remote info
+    let remoteInfo = '';
+    try {
+      const remoteUrl = execSync('git remote get-url origin', { cwd: localPath, encoding: 'utf8' }).trim();
+      remoteInfo = `**Remote:** ${remoteUrl}`;
+    } catch {
+      remoteInfo = '**Remote:** No remote configured';
+    }
+    
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `📊 **Git Status:**\n\n**Repository:** ${localPath}\n**Current Branch:** ${currentBranch}\n${remoteInfo}\n**Last Commit:** ${lastCommit}\n\n**Changes:**\n${statusLines.length > 0 ? statusLines.map(line => `  ${line}`).join('\n') : '  No changes'}\n\n✅ Repository status retrieved!`,
+        },
+      ],
+    };
+  } catch (error) {
+    throw new Error(`Failed to get git status: ${error.message}`);
+  }
 }
 
 // Start the server

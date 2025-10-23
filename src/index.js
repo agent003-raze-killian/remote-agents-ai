@@ -27,6 +27,7 @@ class SlackMCPServer {
     );
 
     this.slack = new WebClient(process.env.SLACK_BOT_TOKEN);
+    this.userSlack = process.env.SLACK_USER_TOKEN ? new WebClient(process.env.SLACK_USER_TOKEN) : null;
     this.setupToolHandlers();
   }
 
@@ -213,7 +214,33 @@ class SlackMCPServer {
           },
           {
             name: 'send_slack_message',
-            description: 'Send a message to a Slack channel',
+            description: 'Send a message to a Slack channel (as bot)',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                channel: {
+                  type: 'string',
+                  description: 'Channel ID or name (e.g., #general or C1234567890)'
+                },
+                text: {
+                  type: 'string',
+                  description: 'Message text to send'
+                },
+                thread_ts: {
+                  type: 'string',
+                  description: 'Optional timestamp of parent message for threading'
+                },
+                blocks: {
+                  type: 'string',
+                  description: 'JSON string of Slack blocks for rich formatting'
+                }
+              },
+              required: ['channel', 'text']
+            }
+          },
+          {
+            name: 'send_slack_message_as_user',
+            description: 'Send a message to a Slack channel as yourself (user)',
             inputSchema: {
               type: 'object',
               properties: {
@@ -581,6 +608,8 @@ class SlackMCPServer {
             return await this.getSlackMessages(args);
           case 'send_slack_message':
             return await this.sendSlackMessage(args);
+          case 'send_slack_message_as_user':
+            return await this.sendSlackMessageAsUser(args);
           case 'react_to_message':
             return await this.reactToMessage(args);
           case 'get_slack_thread_replies':
@@ -750,7 +779,46 @@ class SlackMCPServer {
       content: [
         {
           type: 'text',
-          text: `Message sent successfully to ${channel}!\nMessage timestamp: ${result.ts}`
+          text: `Message sent successfully to ${channel} (as bot)!\nMessage timestamp: ${result.ts}`
+        }
+      ]
+    };
+  }
+
+  async sendSlackMessageAsUser(args) {
+    const { channel, text, thread_ts } = args;
+    
+    if (!this.userSlack) {
+      throw new Error('User OAuth Token not configured. Please set SLACK_USER_TOKEN in your .env file.');
+    }
+    
+    // Resolve channel name to ID if needed
+    let channelId = channel;
+    if (channel.startsWith('#')) {
+      const channelName = channel.substring(1);
+      const channelsResult = await this.slack.conversations.list();
+      const foundChannel = channelsResult.channels.find(c => c.name === channelName);
+      if (!foundChannel) {
+        throw new Error(`Channel ${channel} not found`);
+      }
+      channelId = foundChannel.id;
+    }
+
+    const result = await this.userSlack.chat.postMessage({
+      channel: channelId,
+      text: text,
+      thread_ts: thread_ts
+    });
+
+    if (!result.ok) {
+      throw new Error(`Failed to send message: ${result.error}`);
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Message sent successfully to ${channel} (as user)!\nMessage timestamp: ${result.ts}`
         }
       ]
     };

@@ -9,8 +9,22 @@
     "dev": "node --watch src/index.js",
     "run": "node src/index.js",
     "github-mcp": "node github-mcp-server.js",
-        "echo-agent": "node echo-agent-server.js",
-        "echo-webhook": "node echo-webhook-server.js"
+    "echo-agent": "node echo-agent-server.js",
+    "echo-enhanced": "node echo-agent-enhanced.js",
+    "echo-webhook": "node echo-webhook-server.js",
+    "echo-claude": "node echo-claude-bot.js",
+    "echo-simple": "node echo-simple-auto-reply.js",
+    "echo-fixed": "node echo-simple-fixed.js",
+    "echo-finder": "node echo-channel-finder.js",
+    "echo-clean": "node echo-clean.js",
+    "echo-terminal": "node echo-fixed-terminal.js",
+    "echo-join": "node echo-with-join.js",
+    "echo-multi": "node echo-multi-channel.js",
+    "echo-ids": "node echo-with-ids.js",
+    "echo-final": "node echo-final-working.js",
+    "test-echo": "node test-echo-single.js",
+    "test-mentions": "node test-mention-formats.js",
+    "find-channel": "node find-channel-id.js"
   },
   "keywords": [
     "mcp",
@@ -27,8 +41,9 @@
     "@anthropic-ai/sdk": "^0.65.0",
     "@modelcontextprotocol/sdk": "^1.20.1",
     "@octokit/rest": "^22.0.0",
+    "@slack/events-api": "^3.0.1",
     "@slack/web-api": "^7.11.0",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "express": "^4.19.2"
   },
   "engines": {

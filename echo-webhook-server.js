@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * 🚀 Echo Agent Webhook Server
+ * ⚡ Echo Agent Webhook Server
  * Handles Slack events and interactivity for Echo Agent
  */
 
+import 'dotenv/config';
 import express from 'express';
 import { WebClient } from '@slack/web-api';
 import { EchoIntelligence } from './lib/echo-intelligence.js';
@@ -35,17 +36,19 @@ app.post('/slack/events', verifySlackRequest, async (req, res) => {
 
   // Handle URL verification
   if (type === 'url_verification') {
-    return res.send(challenge);
+    console.log('✅ URL verification received, sending challenge back');
+    return res.status(200).json({ challenge });
   }
 
   // Handle events
   if (type === 'event_callback') {
+    // Acknowledge immediately
+    res.status(200).send('OK');
+    
     try {
       await handleSlackEvent(event);
-      res.status(200).send('OK');
     } catch (error) {
       console.error('Error handling Slack event:', error);
-      res.status(500).send('Error');
     }
   } else {
     res.status(200).send('OK');
@@ -56,12 +59,13 @@ app.post('/slack/events', verifySlackRequest, async (req, res) => {
 app.post('/slack/interactive', verifySlackRequest, async (req, res) => {
   const payload = JSON.parse(req.body.payload);
   
+  // Acknowledge immediately
+  res.status(200).send('OK');
+  
   try {
     await handleSlackInteraction(payload);
-    res.status(200).send('OK');
   } catch (error) {
     console.error('Error handling Slack interaction:', error);
-    res.status(500).send('Error');
   }
 });
 
@@ -72,11 +76,15 @@ async function handleSlackEvent(event) {
   // Ignore bot messages
   if (bot_id) return;
 
+  console.log(`📨 Received event: ${type} in channel ${channel}`);
+
   // Handle app mentions
   if (type === 'app_mention') {
     const message = text.replace(/<@[^>]+>/g, '').trim();
     
     if (message) {
+      console.log(`🎯 Mention detected: "${message}"`);
+      
       const response = await echoIntelligence.think(message, {
         conversationId: channel,
         eventType: 'mention'
@@ -88,11 +96,15 @@ async function handleSlackEvent(event) {
         username: "Echo Agent001",
         icon_emoji: ":zap:"
       });
+      
+      console.log('✅ Response sent!');
     }
   }
 
   // Handle direct messages
   if (type === 'message' && event.channel_type === 'im') {
+    console.log(`💬 Direct message received: "${text}"`);
+    
     const response = await echoIntelligence.think(text, {
       conversationId: channel,
       eventType: 'dm'
@@ -104,12 +116,16 @@ async function handleSlackEvent(event) {
       username: "Echo Agent001",
       icon_emoji: ":zap:"
     });
+    
+    console.log('✅ DM response sent!');
   }
 }
 
 // Handle Slack interactions (buttons, modals, etc.)
 async function handleSlackInteraction(payload) {
   const { type, user, channel, actions } = payload;
+
+  console.log(`🔘 Interaction received: ${type}`);
 
   if (type === 'block_actions') {
     // Handle button clicks, etc.
@@ -127,6 +143,8 @@ async function handleSlackInteraction(payload) {
         username: "Echo Agent001",
         icon_emoji: ":zap:"
       });
+      
+      console.log('✅ Interaction response sent!');
     }
   }
 }
@@ -137,14 +155,33 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     agent: 'Echo',
     personality: 'energetic',
-    message: 'Let\'s gooo! 🚀'
+    message: 'Let\'s gooo! 🚀',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    agent: 'Echo Agent001',
+    status: 'VIBING! ✨',
+    endpoints: {
+      events: '/slack/events',
+      interactive: '/slack/interactive',
+      health: '/health'
+    }
   });
 });
 
 // Start server
 app.listen(port, () => {
-  console.error(`⚡ Echo Agent webhook server running on port ${port}`);
-  console.error('🚀 Ready to bring the ENERGY!');
+  console.log(`⚡ Echo Agent webhook server running on port ${port}`);
+  console.log(`🚀 Ready to bring the ENERGY!`);
+  console.log(`📡 Listening at http://localhost:${port}`);
+  console.log(`\n🔗 Endpoints:`);
+  console.log(`   - POST /slack/events (Event Subscriptions)`);
+  console.log(`   - POST /slack/interactive (Interactivity)`);
+  console.log(`   - GET /health (Health Check)`);
 });
 
 export default app;
