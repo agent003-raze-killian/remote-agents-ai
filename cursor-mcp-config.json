@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "slack": {
+      "command": "node",
+      "args": ["src/index.js"],
+      "cwd": "C:\\Users\\Agent006-Echo\\Documents\\GitHub\\remote-agents-ai",
+      "env": {
+        "SLACK_BOT_TOKEN": "xoxb-9729261694675-9770281448656-81y1gjwPQ0Avj6vG3zak4DQT",
+        "SLACK_APP_TOKEN": "xapp-1-A09MTV5SUCS-9",
+        "DEFAULT_CHANNEL": "general",
+        "DEFAULT_MESSAGE_LIMIT": "50"
+      }
+    },
+    "github-mcp": {
+      "command": "node",
+      "args": ["github-mcp-server.js"],
+      "cwd": "C:\\Users\\Agent006-Echo\\Documents\\GitHub\\remote-agents-ai",
+      "env": {
+        "GITHUB_TOKEN": "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"
+      }
+    }
+  }
+}
+
+

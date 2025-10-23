@@ -1,0 +1,880 @@
+#!/usr/bin/env node
+
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+class N8nMCPServer {
+  constructor() {
+    this.server = new Server(
+      {
+        name: 'n8n-mcp-server',
+        version: '1.0.0',
+      },
+      {
+        capabilities: {
+          tools: {},
+        },
+      }
+    );
+
+    this.n8nUrl = process.env.N8N_URL || 'https://shoreagents.app.n8n.cloud';
+    this.apiKey = process.env.N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOTU2NDJhMS1hZWRiLTQ4Y2UtOGZkZi05NDJjNmMzMDliYTAiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYxMTExMTU2fQ._sVr4YOJSJCmRgH7KcekZXG0eTS87gBLtUs1ySfDNpo';
+
+    this.axiosInstance = axios.create({
+      baseURL: this.n8nUrl,
+      headers: {
+        'X-N8N-API-KEY': this.apiKey,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    this.setupToolHandlers();
+  }
+
+  setupToolHandlers() {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: [
+          // Workflow Management
+          {
+            name: 'n8n_list_workflows',
+            description: 'List all workflows in n8n',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                limit: { type: 'number', description: 'Number of workflows to return', default: 50 },
+                active: { type: 'boolean', description: 'Filter by active status' },
+              },
+            },
+          },
+          {
+            name: 'n8n_get_workflow',
+            description: 'Get workflow details by ID',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Workflow ID' },
+              },
+              required: ['workflowId'],
+            },
+          },
+          {
+            name: 'n8n_create_workflow',
+            description: 'Create a new workflow',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', description: 'Workflow name' },
+                description: { type: 'string', description: 'Workflow description' },
+                nodes: { type: 'array', description: 'Array of workflow nodes' },
+                connections: { type: 'object', description: 'Node connections' },
+                active: { type: 'boolean', description: 'Whether to activate the workflow', default: false },
+              },
+              required: ['name'],
+            },
+          },
+          {
+            name: 'n8n_update_workflow',
+            description: 'Update an existing workflow',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Workflow ID' },
+                name: { type: 'string', description: 'New workflow name' },
+                description: { type: 'string', description: 'New workflow description' },
+                nodes: { type: 'array', description: 'Updated workflow nodes' },
+                connections: { type: 'object', description: 'Updated node connections' },
+                active: { type: 'boolean', description: 'Whether to activate the workflow' },
+              },
+              required: ['workflowId'],
+            },
+          },
+          {
+            name: 'n8n_delete_workflow',
+            description: 'Delete a workflow',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Workflow ID' },
+              },
+              required: ['workflowId'],
+            },
+          },
+          {
+            name: 'n8n_activate_workflow',
+            description: 'Activate a workflow',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Workflow ID' },
+              },
+              required: ['workflowId'],
+            },
+          },
+          {
+            name: 'n8n_deactivate_workflow',
+            description: 'Deactivate a workflow',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Workflow ID' },
+              },
+              required: ['workflowId'],
+            },
+          },
+
+          // Workflow Execution
+          {
+            name: 'n8n_execute_workflow',
+            description: 'Execute a workflow manually',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Workflow ID' },
+                inputData: { type: 'object', description: 'Input data for the workflow' },
+                waitForExecution: { type: 'boolean', description: 'Wait for execution to complete', default: false },
+              },
+              required: ['workflowId'],
+            },
+          },
+          {
+            name: 'n8n_list_executions',
+            description: 'List workflow executions',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Filter by workflow ID' },
+                limit: { type: 'number', description: 'Number of executions to return', default: 20 },
+                status: { type: 'string', description: 'Filter by execution status (success, error, running, waiting)' },
+              },
+            },
+          },
+          {
+            name: 'n8n_get_execution',
+            description: 'Get execution details by ID',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                executionId: { type: 'string', description: 'Execution ID' },
+              },
+              required: ['executionId'],
+            },
+          },
+          {
+            name: 'n8n_retry_execution',
+            description: 'Retry a failed execution',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                executionId: { type: 'string', description: 'Execution ID' },
+              },
+              required: ['executionId'],
+            },
+          },
+
+          // Node Management
+          {
+            name: 'n8n_list_nodes',
+            description: 'List available n8n nodes',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                category: { type: 'string', description: 'Filter by node category' },
+                search: { type: 'string', description: 'Search for specific nodes' },
+              },
+            },
+          },
+          {
+            name: 'n8n_get_node_info',
+            description: 'Get information about a specific node',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                nodeType: { type: 'string', description: 'Node type (e.g., n8n-nodes-base.webhook)' },
+              },
+              required: ['nodeType'],
+            },
+          },
+
+          // Credential Management
+          {
+            name: 'n8n_list_credentials',
+            description: 'List stored credentials',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                limit: { type: 'number', description: 'Number of credentials to return', default: 50 },
+              },
+            },
+          },
+          {
+            name: 'n8n_test_credential',
+            description: 'Test a credential connection',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                credentialId: { type: 'string', description: 'Credential ID' },
+              },
+              required: ['credentialId'],
+            },
+          },
+
+          // Webhook Management
+          {
+            name: 'n8n_create_webhook',
+            description: 'Create a webhook for a workflow',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Workflow ID' },
+                webhookPath: { type: 'string', description: 'Webhook path' },
+                httpMethod: { type: 'string', description: 'HTTP method (GET, POST, PUT, DELETE)', default: 'POST' },
+              },
+              required: ['workflowId'],
+            },
+          },
+          {
+            name: 'n8n_list_webhooks',
+            description: 'List webhooks',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                workflowId: { type: 'string', description: 'Filter by workflow ID' },
+              },
+            },
+          },
+          {
+            name: 'n8n_delete_webhook',
+            description: 'Delete a webhook',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                webhookId: { type: 'string', description: 'Webhook ID' },
+              },
+              required: ['webhookId'],
+            },
+          },
+
+          // Instance Information
+          {
+            name: 'n8n_get_instance_info',
+            description: 'Get n8n instance information',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
+          {
+            name: 'n8n_get_settings',
+            description: 'Get n8n settings',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
+        ],
+      };
+    });
+
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      try {
+        switch (name) {
+          // Workflow Management
+          case 'n8n_list_workflows':
+            return await this.listWorkflows(args);
+          case 'n8n_get_workflow':
+            return await this.getWorkflow(args);
+          case 'n8n_create_workflow':
+            return await this.createWorkflow(args);
+          case 'n8n_update_workflow':
+            return await this.updateWorkflow(args);
+          case 'n8n_delete_workflow':
+            return await this.deleteWorkflow(args);
+          case 'n8n_activate_workflow':
+            return await this.activateWorkflow(args);
+          case 'n8n_deactivate_workflow':
+            return await this.deactivateWorkflow(args);
+
+          // Workflow Execution
+          case 'n8n_execute_workflow':
+            return await this.executeWorkflow(args);
+          case 'n8n_list_executions':
+            return await this.listExecutions(args);
+          case 'n8n_get_execution':
+            return await this.getExecution(args);
+          case 'n8n_retry_execution':
+            return await this.retryExecution(args);
+
+          // Node Management
+          case 'n8n_list_nodes':
+            return await this.listNodes(args);
+          case 'n8n_get_node_info':
+            return await this.getNodeInfo(args);
+
+          // Credential Management
+          case 'n8n_list_credentials':
+            return await this.listCredentials(args);
+          case 'n8n_test_credential':
+            return await this.testCredential(args);
+
+          // Webhook Management
+          case 'n8n_create_webhook':
+            return await this.createWebhook(args);
+          case 'n8n_list_webhooks':
+            return await this.listWebhooks(args);
+          case 'n8n_delete_webhook':
+            return await this.deleteWebhook(args);
+
+          // Instance Information
+          case 'n8n_get_instance_info':
+            return await this.getInstanceInfo(args);
+          case 'n8n_get_settings':
+            return await this.getSettings(args);
+
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error executing ${name}: ${error.message}`,
+            },
+          ],
+        };
+      }
+    });
+  }
+
+  // Workflow Management Methods
+  async listWorkflows(args) {
+    const { limit = 50, active } = args;
+    
+    try {
+      const params = new URLSearchParams();
+      if (limit) params.append('limit', limit);
+      if (active !== undefined) params.append('active', active);
+      
+      const url = `${this.n8nUrl}/api/v1/workflows?${params.toString()}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-N8N-API-KEY': this.apiKey,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      const workflows = data.data || [];
+      const workflowList = workflows.map(workflow => 
+        `• ${workflow.name} (ID: ${workflow.id}) - ${workflow.active ? 'Active' : 'Inactive'}`
+      ).join('\n');
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Found ${workflows.length} workflows:\n${workflowList}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to list workflows: ${error.message}`);
+    }
+  }
+
+  async getWorkflow(args) {
+    const { workflowId } = args;
+    
+    try {
+      const response = await fetch(`${this.n8nUrl}/api/v1/workflows/${workflowId}`, {
+        method: 'GET',
+        headers: {
+          'X-N8N-API-KEY': this.apiKey,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const workflow = await response.json();
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow: ${workflow.name}\nID: ${workflow.id}\nDescription: ${workflow.description || 'No description'}\nStatus: ${workflow.active ? 'Active' : 'Inactive'}\nNodes: ${workflow.nodes?.length || 0}\nCreated: ${workflow.createdAt}\nUpdated: ${workflow.updatedAt}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to get workflow: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async createWorkflow(args) {
+    const { name, description, nodes = [], connections = {}, active = false } = args;
+    
+    try {
+      const workflowData = {
+        name,
+        description,
+        nodes: nodes || [],
+        connections: connections || {},
+        settings: {
+          executionOrder: 'v1',
+          saveManualExecutions: false,
+          callerPolicy: 'workflowsFromSameOwner',
+          errorWorkflow: '',
+        },
+      };
+      
+      const response = await fetch(`${this.n8nUrl}/api/v1/workflows`, {
+        method: 'POST',
+        headers: {
+          'X-N8N-API-KEY': this.apiKey,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workflowData),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const workflow = await response.json();
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow created successfully!\nName: ${name}\nID: ${workflow.id}\nStatus: ${workflow.active ? 'Active' : 'Inactive'}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to create workflow: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async updateWorkflow(args) {
+    const { workflowId, name, description, nodes, connections, active } = args;
+    
+    try {
+      const updateData = {};
+      if (name) updateData.name = name;
+      if (description) updateData.description = description;
+      if (nodes) updateData.nodes = nodes;
+      if (connections) updateData.connections = connections;
+      if (active !== undefined) updateData.active = active;
+      
+      const response = await this.axiosInstance.put(`/api/workflows/${workflowId}`, updateData);
+      const workflow = response.data;
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow updated successfully!\nName: ${workflow.name}\nID: ${workflow.id}\nStatus: ${workflow.active ? 'Active' : 'Inactive'}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to update workflow: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async deleteWorkflow(args) {
+    const { workflowId } = args;
+    
+    try {
+      await this.axiosInstance.delete(`/api/workflows/${workflowId}`);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow ${workflowId} deleted successfully!`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to delete workflow: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async activateWorkflow(args) {
+    const { workflowId } = args;
+    
+    try {
+      await this.axiosInstance.put(`/api/v1/workflows/${workflowId}/activate`);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow ${workflowId} activated successfully!`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to activate workflow: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async deactivateWorkflow(args) {
+    const { workflowId } = args;
+    
+    try {
+      await this.axiosInstance.put(`/api/v1/workflows/${workflowId}/deactivate`);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow ${workflowId} deactivated successfully!`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to deactivate workflow: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  // Workflow Execution Methods
+  async executeWorkflow(args) {
+    const { workflowId, inputData, waitForExecution = false } = args;
+    
+    try {
+      const response = await this.axiosInstance.post(`/api/v1/workflows/${workflowId}/execute`, {
+        inputData,
+      });
+      
+      const execution = response.data;
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow execution started!\nExecution ID: ${execution.id}\nStatus: ${execution.status}\nStarted: ${execution.startedAt}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to execute workflow: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async listExecutions(args) {
+    const { workflowId, limit = 20, status } = args;
+    
+    try {
+      const params = { limit };
+      if (workflowId) params.workflowId = workflowId;
+      if (status) params.status = status;
+      
+      const response = await this.axiosInstance.get('/api/v1/executions', { params });
+      const executions = response.data.data || [];
+      
+      const executionList = executions.map(execution => 
+        `• ${execution.id} - ${execution.status} - ${execution.startedAt}`
+      ).join('\n');
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Found ${executions.length} executions:\n${executionList}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to list executions: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async getExecution(args) {
+    const { executionId } = args;
+    
+    try {
+      const response = await this.axiosInstance.get(`/api/v1/executions/${executionId}`);
+      const execution = response.data;
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Execution: ${execution.id}\nStatus: ${execution.status}\nStarted: ${execution.startedAt}\nFinished: ${execution.finishedAt || 'Still running'}\nWorkflow: ${execution.workflowId}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to get execution: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async retryExecution(args) {
+    const { executionId } = args;
+    
+    try {
+      const response = await this.axiosInstance.post(`/api/v1/executions/${executionId}/retry`);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Execution ${executionId} retry started successfully!`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to retry execution: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  // Node Management Methods
+  async listNodes(args) {
+    const { category, search } = args;
+    
+    try {
+      const response = await this.axiosInstance.get('/api/v1/node-types');
+      let nodes = response.data || [];
+      
+      if (category) {
+        nodes = nodes.filter(node => node.category === category);
+      }
+      
+      if (search) {
+        nodes = nodes.filter(node => 
+          node.displayName.toLowerCase().includes(search.toLowerCase()) ||
+          node.name.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      
+      const nodeList = nodes.map(node => 
+        `• ${node.displayName} (${node.name}) - ${node.category}`
+      ).join('\n');
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Found ${nodes.length} nodes:\n${nodeList}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to list nodes: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async getNodeInfo(args) {
+    const { nodeType } = args;
+    
+    try {
+      const response = await this.axiosInstance.get(`/api/v1/node-types/${nodeType}`);
+      const node = response.data;
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Node: ${node.displayName}\nType: ${node.name}\nCategory: ${node.category}\nDescription: ${node.description || 'No description'}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to get node info: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  // Credential Management Methods
+  async listCredentials(args) {
+    const { limit = 50 } = args;
+    
+    try {
+      const response = await this.axiosInstance.get('/api/v1/credentials', {
+        params: { limit }
+      });
+      
+      const credentials = response.data.data || [];
+      const credentialList = credentials.map(cred => 
+        `• ${cred.name} (${cred.type}) - ${cred.id}`
+      ).join('\n');
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Found ${credentials.length} credentials:\n${credentialList}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to list credentials: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async testCredential(args) {
+    const { credentialId } = args;
+    
+    try {
+      const response = await this.axiosInstance.post(`/api/v1/credentials/${credentialId}/test`);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Credential ${credentialId} test ${response.data.success ? 'passed' : 'failed'}!`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to test credential: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  // Webhook Management Methods
+  async createWebhook(args) {
+    const { workflowId, webhookPath, httpMethod = 'POST' } = args;
+    
+    try {
+      const webhookData = {
+        workflowId,
+        path: webhookPath,
+        httpMethod,
+      };
+      
+      const response = await this.axiosInstance.post('/api/v1/webhooks', webhookData);
+      const webhook = response.data;
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Webhook created successfully!\nID: ${webhook.id}\nPath: ${webhook.path}\nMethod: ${webhook.httpMethod}\nURL: ${this.n8nUrl}/webhook/${webhook.path}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to create webhook: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async listWebhooks(args) {
+    const { workflowId } = args;
+    
+    try {
+      const params = workflowId ? { workflowId } : {};
+      const response = await this.axiosInstance.get('/api/v1/webhooks', { params });
+      
+      const webhooks = response.data.data || [];
+      const webhookList = webhooks.map(webhook => 
+        `• ${webhook.path} (${webhook.httpMethod}) - ${webhook.id}`
+      ).join('\n');
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Found ${webhooks.length} webhooks:\n${webhookList}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to list webhooks: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async deleteWebhook(args) {
+    const { webhookId } = args;
+    
+    try {
+      await this.axiosInstance.delete(`/api/v1/webhooks/${webhookId}`);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Webhook ${webhookId} deleted successfully!`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to delete webhook: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  // Instance Information Methods
+  async getInstanceInfo(args) {
+    try {
+      const response = await this.axiosInstance.get('/api/');
+      const instance = response.data;
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `n8n Instance Information:\nVersion: ${instance.version}\nType: ${instance.type}\nURL: ${this.n8nUrl}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to get instance info: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async getSettings(args) {
+    try {
+      const response = await this.axiosInstance.get('/api/v1/settings');
+      const settings = response.data;
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `n8n Settings:\n${JSON.stringify(settings, null, 2)}`,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to get settings: ${error.response?.data?.message || error.message}`);
+    }
+  }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    console.error('n8n MCP server running on stdio');
+  }
+}
+
+const server = new N8nMCPServer();
+server.run().catch(console.error);
+
