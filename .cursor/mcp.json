@@ -1,8 +1,17 @@
 {
   "mcpServers": {
-    "cipher-slack": {
-      "command": "node",
-      "args": ["cipher_slack_mcp.js"]
+    "n8n-mcp": {
+      "command": "npx",
+      "args": [
+        "n8n-mcp"
+      ],
+      "env": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true",
+        "N8N_API_URL": "https://shoreagents.app.n8n.cloud",
+        "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOTU2NDJhMS1hZWRiLTQ4Y2UtOGZkZi05NDJjNmMzMDliYTAiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYxMTExMTU2fQ._sVr4YOJSJCmRgH7KcekZXG0eTS87gBLtUs1ySfDNpo"
+      }
     }
   }
 }
