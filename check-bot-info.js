@@ -33,3 +33,19 @@ async function checkBotInfo() {
 }
 
 checkBotInfo();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

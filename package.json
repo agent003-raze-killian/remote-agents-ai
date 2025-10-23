@@ -30,7 +30,9 @@
   "author": "Shadow (VOID)",
   "license": "MIT",
   "dependencies": {
+    "@linear/sdk": "^61.0.0",
     "@modelcontextprotocol/sdk": "^0.4.0",
+    "@octokit/rest": "^22.0.0",
     "@slack/web-api": "^7.0.0",
     "axios": "^1.12.2",
     "dotenv": "^16.3.1",
