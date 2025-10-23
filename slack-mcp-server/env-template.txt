@@ -1,0 +1,13 @@
+# Copy this file to .env and fill in your values
+
+# Slack Bot Token (starts with xoxb-)
+# Required scopes: chat:write, channels:history, channels:read, groups:history, groups:read, im:history, im:read, im:write, users:read
+SLACK_BOT_TOKEN=xoxb-your-bot-token-here
+
+# Slack App Token (starts with xapp-) - Required for Socket Mode
+# This allows your app to receive events via WebSocket instead of HTTP webhooks
+SLACK_APP_TOKEN=xapp-your-app-token-here
+
+# Optional: Default channel for sending messages (can be overridden per message)
+DEFAULT_SLACK_CHANNEL=general
+

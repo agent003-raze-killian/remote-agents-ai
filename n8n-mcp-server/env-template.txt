@@ -1,0 +1,14 @@
+# N8N MCP Server Environment Variables
+
+# Your N8N API Key
+# Get this from: Settings → API → Create API Key
+N8N_API_KEY=n8n_api_xxxxxxxxxxxxxxxxxxxxx
+
+# Your N8N Base URL
+# Examples:
+#   - N8N Cloud: https://your-instance.app.n8n.cloud
+#   - Self-Hosted: http://localhost:5678
+#   - Custom: https://n8n.yourdomain.com
+N8N_BASE_URL=http://localhost:5678
+
+
