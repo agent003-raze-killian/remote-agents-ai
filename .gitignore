@@ -62,6 +62,8 @@ coverage/
 *-token.txt
 *-secret.txt
 credentials.json
+YOUR-ENV-FILE.txt
+**/YOUR-ENV-FILE.txt
 
 # Backup Files
 *.bak
