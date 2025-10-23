@@ -1,0 +1,28 @@
+{
+  "name": "remote-agents-ai-mcp-servers",
+  "version": "1.0.0",
+  "description": "MCP servers for GitHub, Slack, and Linear integration",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "@octokit/rest": "^20.0.2",
+    "@slack/web-api": "^7.0.0",
+    "@linear/sdk": "^1.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "keywords": [
+    "mcp",
+    "github",
+    "slack",
+    "linear",
+    "ai",
+    "agents"
+  ],
+  "author": "",
+  "license": "MIT"
+}
